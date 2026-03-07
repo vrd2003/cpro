@@ -1,0 +1,393 @@
+========================================================
+ C++ DSA CODE ANALYZER & VISUALIZER
+ Project Build Log — Step-by-Step File Creation & Commands
+ Date: 2026-03-08
+========================================================
+
+This document records every file created and every command
+executed to build the project from scratch.
+
+--------------------------------------------------------
+SECTION 1: PREREQUISITES (verify before starting)
+--------------------------------------------------------
+
+Commands to verify tools are installed:
+
+  cmake --version
+  > Expected: cmake version 3.x.x
+
+  Get-ChildItem C:\Qt\6.10.2\mingw_64   (PowerShell)
+  > Expected: bin/, lib/, include/ directories present
+
+  Get-ChildItem C:\Qt\Tools\mingw1310_64\bin\g++.exe
+  > Expected: file found
+
+  Get-ChildItem C:\Qt\Tools\Ninja\ninja.exe
+  > Expected: file found
+
+--------------------------------------------------------
+SECTION 2: PROJECT DIRECTORY STRUCTURE CREATED
+--------------------------------------------------------
+
+Total files created: 21 source files + 3 config files
+
+Directory layout:
+
+  c:\projects\cpro\
+  ├── CMakeLists.txt          [created first — build config]
+  ├── main.cpp                [Qt entry point]
+  ├── build.bat               [Windows build helper]
+  ├── .gitignore              [Git ignore rules]
+  ├── README.md               [Documentation]
+  ├── src\
+  │   ├── ASTNode.h
+  │   ├── TokenProcessor.h
+  │   ├── TokenProcessor.cpp
+  │   ├── LoopDetector.h
+  │   ├── LoopDetector.cpp
+  │   ├── ASTBuilder.h
+  │   ├── ASTBuilder.cpp
+  │   ├── PatternTracker.h
+  │   ├── PatternTracker.cpp
+  │   ├── ComplexityEstimator.h
+  │   ├── ComplexityEstimator.cpp
+  │   ├── SuggestionEngine.h
+  │   ├── SuggestionEngine.cpp
+  │   ├── Analyzer.h
+  │   └── Analyzer.cpp
+  └── gui\
+      ├── SyntaxHighlighter.h
+      ├── SyntaxHighlighter.cpp
+      ├── ChartHelper.h
+      ├── ChartHelper.cpp
+      ├── MainWindow.h
+      └── MainWindow.cpp
+
+--------------------------------------------------------
+SECTION 3: FILE CREATION ORDER & PURPOSE
+--------------------------------------------------------
+
+[1]  CMakeLists.txt
+     Purpose : CMake build definition
+     Key content:
+       - cmake_minimum_required(VERSION 3.22)
+       - project(ComplexityAnalyzer VERSION 1.0 LANGUAGES CXX)
+       - set(CMAKE_CXX_STANDARD 17)
+       - set(CMAKE_AUTOMOC ON)  [for Qt MOC code generation]
+       - find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
+       - add_executable(ComplexityAnalyzer main.cpp ...)
+       - target_link_libraries(... Qt6::Widgets Qt6::Charts)
+
+[2]  src\ASTNode.h
+     Purpose : Data structure for the Abstract Syntax Tree
+     Key content:
+       - struct ASTNode { label, depth, lineNumber, children }
+       - children is std::vector<std::shared_ptr<ASTNode>>
+
+[3]  src\TokenProcessor.h
+     Purpose : Token type definitions and tokenizer interface
+     Key content:
+       - enum class TokenType { FOR, WHILE, DO, SORT,
+           BINARY_SEARCH, QUEUE_OP, STACK_OP, PRIORITY_QUEUE,
+           HASH_MAP, MAP_OP, MEMO_MAP, BIT_OP, FUNC_DEF, ... }
+       - struct Token { type, text, lineNumber }
+       - class TokenProcessor { tokenize(), functionNames }
+
+[4]  src\TokenProcessor.cpp
+     Purpose : Tokenizer implementation
+     Key content:
+       - Strips // and /* */ comments
+       - Emits brace/paren tokens character-by-character
+       - Classifies words: for/while/sort/binary_search/
+         queue/stack/priority_queue/unordered_map/dp[]/bit-ops
+       - Collects function names (for recursion detection)
+
+[5]  src\LoopDetector.h
+     Purpose : Loop nesting depth tracker interface
+     Key content:
+       - struct LoopInfo { maxDepth, forLoops, whileLoops,
+           hasSort, hasBinSearch, hasMapOp }
+
+[6]  src\LoopDetector.cpp
+     Purpose : Loop depth detection using std::stack
+     Key content:
+       - std::stack<bool> loopBraces
+       - Push true on OPEN_BRACE after FOR/WHILE/DO token
+       - Pop on CLOSE_BRACE, decrement depth if loop brace
+       - Track maxDepth reached during scan
+
+[7]  src\ASTBuilder.h
+     Purpose : AST builder interface
+
+[8]  src\ASTBuilder.cpp
+     Purpose : Builds tree from token stream
+     Key content:
+       - std::stack<shared_ptr<ASTNode>> parentStack
+       - Push new node on OPEN_BRACE after FOR/WHILE/IF/ELSE
+       - Pop on CLOSE_BRACE
+       - Leaf nodes for SORT, BINARY_SEARCH, QUEUE_OP,
+         PRIORITY_QUEUE, MEMO_MAP, SWAP_OP, BIT_OP, FUNC_DEF
+
+[9]  src\PatternTracker.h
+     Purpose : Pattern counting + AlgorithmKind enum
+     Key content:
+       - enum class AlgorithmKind { BUBBLE_SORT, BFS,
+           DFS_RECURSIVE, MEMOIZATION, TABULATION,
+           GREEDY_HEAP, BINARY_SEARCH, HASHING,
+           BIT_MANIPULATION, BACKTRACKING, ... }
+       - algorithmName(), algorithmComplexity(),
+         algorithmBetterAlternative() functions declared
+       - struct PatternCounts { unordered_map<string,int> counts,
+           bool hasSort/hasBinSearch/hasQueue/hasMemo/... }
+
+[10] src\PatternTracker.cpp
+     Purpose : Pattern tracking + algorithm lookup tables
+     Key content:
+       - algorithmName()        — human readable names
+       - algorithmComplexity()  — "O(n²) avg, O(n²) worst" etc.
+       - algorithmBetterAlternative() — specific advice per algo
+       - PatternTracker::track() — fills PatternCounts from tokens
+
+[11] src\ComplexityEstimator.h
+     Purpose : Complexity estimate result types
+     Key content:
+       - enum class ComplexityClass { O1, OLogN, ON, ONLogN,
+           ON2, ON2LogN, ON3, ONK }
+       - struct ComplexityResult { label, cls, depth }
+
+[12] src\ComplexityEstimator.cpp
+     Purpose : Big-O rule engine
+     Key content:
+       - depth=0, no sort → O(1)
+       - depth=0, hasSort → O(n log n)
+       - depth=1, no sort → O(n)
+       - depth=1, sort    → O(n log n)
+       - depth=2, no sort → O(n²)
+       - depth=2, sort    → O(n² log n)
+       - depth=3          → O(n³)
+       - depth>3          → O(n^k)
+
+[13] src\SuggestionEngine.h
+     Purpose : Suggestion type and interface
+     Key content:
+       - struct Suggestion { severity(1-5), icon, text }
+       - max-heap ordering via operator<
+       - forward declaration of AnalysisResult
+
+[14] src\SuggestionEngine.cpp
+     Purpose : Ranked suggestions using std::priority_queue
+     Key content:
+       - Section 1: Algorithm-specific better alternative tip
+       - Section 2: Nesting/complexity warnings
+           (triple loop, sort-inside-loop, O(n²) alternatives)
+       - Section 3: Pattern-specific tips
+           (linear→binary search, BFS→Dijkstra, DFS stack overflow,
+            DP memo warning, two-pointer hint, sliding window hint,
+            hash map reserve, backtracking pruning)
+
+[15] src\Analyzer.h
+     Purpose : Facade interface + AnalysisResult struct
+     Key content:
+       - struct AnalysisResult { complexity, complexityClass,
+           maxDepth, hasSort/hasQueue/hasMemo/...,
+           forLoops, whileLoops, primaryAlgorithm,
+           secondaryAlgorithm, patterns, ast, suggestions }
+       - class Analyzer { analyze(), identifyPrimary(),
+           identifySecondary() }
+
+[16] src\Analyzer.cpp
+     Purpose : Main analysis pipeline + algorithm ID logic
+     Key content:
+       - Calls TokenProcessor → LoopDetector → ASTBuilder
+         → PatternTracker → ComplexityEstimator → SuggestionEngine
+       - identifyPrimary(): heuristic rules per AlgorithmKind
+           queue+loop→BFS, 2loops+swap→BubbleSort,
+           recursion+swap→QuickSort, dp[]+loop→Tabulation, etc.
+       - identifySecondary(): checks remaining flags
+
+[17] gui\SyntaxHighlighter.h / .cpp
+     Purpose : VS Code-style C++ syntax highlighting
+     Key content:
+       - Extends QSyntaxHighlighter
+       - Rules: C++ keywords (blue), STL types (teal),
+         DSA functions (yellow), numbers (green),
+         strings (orange), preprocessor (grey), comments (green)
+       - Handles multi-line /* */ block comments
+
+[18] gui\ChartHelper.h / .cpp
+     Purpose : Complexity growth chart with 7 curves
+     Key content:
+       - Creates QChart with 7 QLineSeries:
+         O(1), O(log n), O(n), O(n log n), O(n²), O(n² log n), O(n³)
+       - Highlighted curve is bright + thick (width=4)
+       - Dimmed curves have alpha=0.25
+       - Manual axis setup (addAxis) — avoids null QGraphicsScene crash
+       - Dark background (#1e1e2e), styled axes
+
+[19] gui\MainWindow.h / .cpp
+     Purpose : Main application window
+     Key content:
+       - Left panel: QPlainTextEdit + SyntaxHighlighter +
+           QComboBox (15 examples) + QPushButton "Analyze"
+       - Right panel (QSplitter):
+           Top: QTreeWidget (AST nodes, colored by type)
+           Bottom-left: QChartView (complexity chart)
+           Bottom-right: QListWidget (suggestions)
+       - Status bar: complexity badge + algorithm name + flags
+       - Dark Catppuccin stylesheet
+       - QPropertyAnimation button press pulse effect
+
+[20] main.cpp
+     Purpose : Qt application entry point
+     Key content:
+       - QApplication with Fusion style
+       - Custom dark QPalette
+       - Creates and shows MainWindow
+
+[21] build.bat
+     Purpose : One-click Windows build script
+     Key content:
+       - Paths to Qt's bundled cmake, ninja, mingw
+       - cmake configure with Ninja generator
+       - cmake --build
+       - windeployqt6 DLL deployment
+
+[22] .gitignore
+     Purpose : Git exclusion rules
+     Excludes: build/, cmake cache, moc_*.cpp, *.user,
+               .vscode/, .idea/, .vs/, *.dll, *.exe
+
+[23] README.md
+     Purpose : Full project documentation
+     Contains: features, setup, build commands,
+               methodology diagram, algorithm table,
+               Big-O rules, project structure, test cases
+
+--------------------------------------------------------
+SECTION 4: BUILD COMMANDS (in order)
+--------------------------------------------------------
+
+Step 1 — CMake configure (run once, or after CMakeLists change)
+-------
+  C:\Qt\Tools\CMake_64\bin\cmake.exe `
+    -S . -B build `
+    -G "Ninja" `
+    -DCMAKE_BUILD_TYPE=Release `
+    "-DCMAKE_PREFIX_PATH=C:/Qt/6.10.2/mingw_64" `
+    "-DCMAKE_MAKE_PROGRAM=C:/Qt/Tools/Ninja/ninja.exe" `
+    "-DCMAKE_C_COMPILER=C:/Qt/Tools/mingw1310_64/bin/gcc.exe" `
+    "-DCMAKE_CXX_COMPILER=C:/Qt/Tools/mingw1310_64/bin/g++.exe"
+
+  Expected output:
+    -- The CXX compiler identification is GNU 13.x.x
+    -- Configuring done
+    -- Build files have been written to: C:/projects/cpro/build
+
+Step 2 — Ninja build (run after every code change)
+-------
+  C:\Qt\Tools\CMake_64\bin\cmake.exe --build build --config Release --parallel
+
+  Expected output (full rebuild):
+    [1/14] Building CXX object ...TokenProcessor.cpp.obj
+    [2/14] Building CXX object ...LoopDetector.cpp.obj
+    ...
+    [13/14] Linking CXX executable ComplexityAnalyzer.exe
+    [14/14] Running windeployqt6...
+
+  Expected output (incremental, only changed files):
+    [0/1] Re-running CMake...
+    [1/3] Building CXX object ...Analyzer.cpp.obj
+    [2/3] Linking CXX executable ComplexityAnalyzer.exe
+
+Step 3 — Deploy Qt DLLs (first build only — already in CMakeLists)
+-------
+  C:\Qt\6.10.2\mingw_64\bin\windeployqt6.exe `
+    --no-translations build\ComplexityAnalyzer.exe
+
+  Expected: copies Qt6Widgets.dll, Qt6Charts.dll, Qt6Core.dll,
+            Qt6Gui.dll, platforms\qwindows.dll, etc. into build\
+
+Step 4 — Run
+-------
+  .\build\ComplexityAnalyzer.exe
+
+  Or simply double-click build\ComplexityAnalyzer.exe
+
+Step 5 — Quick one-click build (alternative to steps 1-3)
+-------
+  .\build.bat
+
+Step 6 — Clean rebuild (if CMake cache is stale)
+-------
+  Remove-Item -Recurse -Force build
+  .\build.bat
+
+Step 7 — Verify EXE exists and size
+-------
+  Get-Item build\ComplexityAnalyzer.exe | Select-Object Length, LastWriteTime
+  Expected: ~280-300 KB, timestamp = current
+
+Step 8 — Check app stays alive (health check)
+-------
+  $p = Start-Process .\build\ComplexityAnalyzer.exe -PassThru
+  Start-Sleep 5
+  if ($p.HasExited) { "CRASHED: $($p.ExitCode)" } else { "ALIVE PID:$($p.Id)" }
+  Expected: ALIVE PID:XXXXX
+
+--------------------------------------------------------
+SECTION 5: GIT COMMANDS (in order)
+--------------------------------------------------------
+
+Step 1 — Initialize repository
+  git init
+
+Step 2 — Stage all files (respects .gitignore)
+  git add .
+
+Step 3 — Verify what is staged
+  git status --short
+
+Step 4 — Commit
+  git commit -m "Initial commit: C++ DSA Code Analyzer & Visualizer"
+
+Step 5 — Add remote (GitHub)
+  git remote add origin https://github.com/vrd2003/cpro.git
+
+Step 6 — Rename branch to main and push
+  git branch -M main
+  git push -u origin main
+
+Step 7 — Future updates (after editing source files)
+  git add .
+  git commit -m "describe your change"
+  git push
+
+--------------------------------------------------------
+SECTION 6: TROUBLESHOOTING COMMANDS
+--------------------------------------------------------
+
+Problem: "generator mismatch" CMake error
+  Fix: Remove-Item -Recurse -Force build
+
+Problem: App crashes on launch (null QGraphicsScene)
+  Cause: QChartView constructed without an initial chart
+  Fix:   new QChartView(chart) instead of new QChartView()
+         then setChart() separately
+
+Problem: Missing Qt DLLs on launch
+  Fix:   windeployqt6.exe --no-translations build\ComplexityAnalyzer.exe
+
+Problem: Build errors after adding new TokenType enum values
+  Fix:   Update ALL switch statements that handle TokenType:
+         - TokenProcessor.cpp (classifyWord)
+         - LoopDetector.cpp   (detect)
+         - ASTBuilder.cpp     (build)
+         - PatternTracker.cpp (track)
+
+Problem: Qt Charts not found by CMake
+  Fix:   Ensure Qt Charts was installed via Qt Maintenance Tool
+         Check: Get-ChildItem "C:\Qt\6.10.2\mingw_64\lib\cmake\Qt6Charts"
+
+--------------------------------------------------------
+END OF BUILD LOG
+--------------------------------------------------------
