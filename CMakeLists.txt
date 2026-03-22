@@ -10,16 +10,12 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_AUTOUIC ON)
 
 # ── Find Qt6 ────────────────────────────────────────────────────────────────
-find_package(Qt6 REQUIRED COMPONENTS Widgets Charts)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Charts Network)
 
 # ── Source files ────────────────────────────────────────────────────────────
 set(ENGINE_SOURCES
     src/TokenProcessor.cpp
-    src/LoopDetector.cpp
     src/ASTBuilder.cpp
-    src/PatternTracker.cpp
-    src/ComplexityEstimator.cpp
-    src/SuggestionEngine.cpp
     src/Analyzer.cpp
 )
 
@@ -43,6 +39,7 @@ target_include_directories(ComplexityAnalyzer PRIVATE
 target_link_libraries(ComplexityAnalyzer PRIVATE
     Qt6::Widgets
     Qt6::Charts
+    Qt6::Network
 )
 
 # ── Deploy Qt DLLs next to the exe (MinGW) ──────────────────────────────────

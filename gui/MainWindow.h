@@ -8,7 +8,13 @@
 #include <QComboBox>
 #include <QSplitter>
 #include <QtCharts/QChartView>
+#include <QNetworkAccessManager>
+#include <QNetworkReply>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
 #include "../src/Analyzer.h"
+#include "../src/ComplexityClass.h"
 
 class SyntaxHighlighter;
 
@@ -23,19 +29,22 @@ private slots:
 
 private:
     // Left panel
-    QPlainTextEdit*    m_editor;
-    SyntaxHighlighter* m_highlighter;
-    QPushButton*       m_analyzeBtn;
-    QComboBox*         m_exampleCombo;
+    QPlainTextEdit*        m_editor;
+    SyntaxHighlighter*     m_highlighter;
+    QPushButton*           m_analyzeBtn;
+    QComboBox*             m_exampleCombo;
 
     // Right panel
-    QTreeWidget*       m_astTree;
-    QChartView*        m_chartView;
-    QListWidget*       m_suggList;
+    QTreeWidget*             m_astTree;
+    QChartView*              m_chartView;
+    QListWidget*             m_suggList;
 
     // Status bar widgets
     QLabel*            m_complexityBadge;
     QLabel*            m_statsLabel;
+
+    // Network & API
+    QNetworkAccessManager* m_networkMgr;
 
     // Helpers
     void buildUi();
@@ -43,6 +52,9 @@ private:
     void populateAST(const std::shared_ptr<ASTNode>& node,
                      QTreeWidgetItem* parentItem);
     void updateChart(ComplexityClass cls);
-    void updateSuggestions(const std::vector<Suggestion>& suggestions);
     QString nodeIcon(const std::string& label) const;
+
+private slots:
+    void onGeminiResponse(QNetworkReply* reply);
+
 };

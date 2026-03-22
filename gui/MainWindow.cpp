@@ -1,7 +1,7 @@
 #include "MainWindow.h"
 #include "SyntaxHighlighter.h"
 #include "ChartHelper.h"
-#include "../src/PatternTracker.h"
+#include "../src/ComplexityClass.h"
 #include <QHBoxLayout>
 #include <QVBoxLayout>
 #include <QSplitter>
@@ -282,15 +282,14 @@ void MainWindow::buildUi() {
     auto* rightSplitter = new QSplitter(Qt::Vertical);
 
     // AST Tree
-    auto* astGroup = new QGroupBox("🌳  Abstract Syntax Tree");
-    auto* astLayout = new QVBoxLayout(astGroup);
     m_astTree = new QTreeWidget;
     m_astTree->setHeaderLabels({"Node", "Depth", "Line"});
     m_astTree->setColumnWidth(0, 260);
     m_astTree->setColumnWidth(1, 60);
     m_astTree->setAlternatingRowColors(true);
-    astLayout->addWidget(m_astTree);
-    rightSplitter->addWidget(astGroup);
+    m_astTree->setFrameStyle(QFrame::NoFrame);
+
+    rightSplitter->addWidget(m_astTree);
 
     // Bottom: chart + suggestions side-by-side
     auto* bottomWidget  = new QWidget;
@@ -342,6 +341,9 @@ void MainWindow::buildUi() {
     statusBar()->addPermanentWidget(m_complexityBadge);
     statusBar()->addWidget(m_statsLabel);
 
+    m_networkMgr = new QNetworkAccessManager(this);
+    connect(m_networkMgr, &QNetworkAccessManager::finished, this, &MainWindow::onGeminiResponse);
+    
 }
 // Note: initial chart is now set directly in QChartView constructor above
 
@@ -364,54 +366,163 @@ void MainWindow::onAnalyze() {
     Analyzer analyzer;
     AnalysisResult res = analyzer.analyze(code.toStdString());
 
-    // ── Complexity badge ────────────────────────────────────────────────
-    QString label = QString::fromStdString(res.complexity);
-    m_complexityBadge->setText("  Complexity: " + label + "  ");
-
-    // ── Stats label with algorithm name ─────────────────────────────────
-    QString algoName = QString::fromStdString(algorithmName(res.primaryAlgorithm));
-    QString stats;
-    if (res.primaryAlgorithm != AlgorithmKind::NONE &&
-        res.primaryAlgorithm != AlgorithmKind::UNKNOWN) {
-        stats = "  🧠 " + algoName;
-        if (res.secondaryAlgorithm != AlgorithmKind::NONE)
-            stats += " + " + QString::fromStdString(algorithmName(res.secondaryAlgorithm));
-        stats += "  │";
-    }
-    stats += QString("  for×%1  while×%2  depth=%3")
-        .arg(res.forLoops)
-        .arg(res.whileLoops)
-        .arg(res.maxDepth);
-    if (res.hasSort)       stats += "  sort✓";
-    if (res.hasBinSearch)  stats += "  bsearch✓";
-    if (res.hasHashMap)    stats += "  hash✓";
-    if (res.hasQueue)      stats += "  queue✓";
-    if (res.hasMemo)       stats += "  dp✓";
-    if (res.hasBitOp)      stats += "  bit✓";
-    m_statsLabel->setText(stats);
-
-
-    // ── AST tree ────────────────────────────────────────────────────────
+    // Keep generating the AST tree for structural visualization
     m_astTree->clear();
     if (res.ast) {
         populateAST(res.ast, nullptr);
         m_astTree->expandAll();
     }
 
-    // ── Chart ────────────────────────────────────────────────────────────
-    updateChart(res.complexityClass);
+    m_complexityBadge->setText("  Complexity: Loading...  ");
+    m_statsLabel->setText("  Analyzing with Gemini...  ");
+    m_suggList->clear();
+    m_analyzeBtn->setEnabled(false);
 
-    // ── Suggestions ──────────────────────────────────────────────────────
-    updateSuggestions(res.suggestions);
+    QString apiKey = "AIzaSyB-gfsELZDn_0Pv37iDdk6uMPpRMV50wDU";
+    QUrl url("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + apiKey);
+    QNetworkRequest request(url);
+    request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
 
-    // Button pulse animation
-    auto* anim = new QPropertyAnimation(m_analyzeBtn, "geometry");
-    anim->setDuration(120);
-    QRect r = m_analyzeBtn->geometry();
-    anim->setKeyValueAt(0.0, r);
-    anim->setKeyValueAt(0.5, r.adjusted(2, 2, -2, -2));
-    anim->setKeyValueAt(1.0, r);
-    anim->start(QAbstractAnimation::DeleteWhenStopped);
+    QJsonObject systemInstruction;
+    QJsonObject sysParts;
+    sysParts["text"] = "You are an expert C++ code analyzer. Analyze the provided code and return a JSON object with EXACTLY the following format:\n"
+                       "{\n"
+                       "  \"time_complexity\": \"O(...)\",\n"
+                       "  \"space_complexity\": \"O(...)\",\n"
+                       "  \"algorithms_used\": [\"Algo1\", \"Algo2\"],\n"
+                       "  \"suggestions\": [\n"
+                       "    { \"icon\": \"💡\", \"text\": \"Short suggestion...\", \"severity\": 1 } \n"
+                       "  ]\n"
+                       "}\n"
+                       "Severity is 1 (minor) to 5 (critical).\n"
+                       "Response must strictly be the raw JSON object.";
+    QJsonArray sysPartsArray;
+    sysPartsArray.append(sysParts);
+    systemInstruction["parts"] = sysPartsArray;
+
+    QJsonObject userMessage;
+    QJsonObject userParts;
+    userParts["text"] = code;
+    QJsonArray userPartsArray;
+    userPartsArray.append(userParts);
+    userMessage["role"] = "user";
+    userMessage["parts"] = userPartsArray;
+
+    QJsonArray contents;
+    contents.append(userMessage);
+
+    QJsonObject generationConfig;
+    generationConfig["responseMimeType"] = "application/json";
+
+    QJsonObject payload;
+    payload["contents"] = contents;
+    payload["system_instruction"] = systemInstruction;
+    payload["generationConfig"] = generationConfig;
+
+    QJsonDocument doc(payload);
+    m_networkMgr->post(request, doc.toJson());
+}
+
+void MainWindow::onGeminiResponse(QNetworkReply* reply) {
+    m_analyzeBtn->setEnabled(true);
+    reply->deleteLater();
+
+    if (reply->error() != QNetworkReply::NoError) {
+        m_statsLabel->setText("  API Error: " + reply->errorString() + "  ");
+        m_complexityBadge->setText("  Error  ");
+        return;
+    }
+
+    QByteArray data = reply->readAll();
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    QJsonObject root = doc.object();
+
+    if (root.contains("error")) {
+        QString errMsg = root["error"].toObject()["message"].toString();
+        m_statsLabel->setText("  API Error: " + errMsg + "  ");
+        m_complexityBadge->setText("  Error  ");
+        return;
+    }
+
+    QJsonArray candidates = root["candidates"].toArray();
+    if (candidates.isEmpty()) {
+        m_statsLabel->setText("  Error: Empty response  ");
+        return;
+    }
+
+    QString responseText = candidates[0].toObject()["content"].toObject()["parts"].toArray()[0].toObject()["text"].toString();
+    responseText = responseText.trimmed();
+    
+    if (responseText.startsWith("```json", Qt::CaseInsensitive)) {
+        responseText.remove(0, 7);
+        if (responseText.endsWith("```")) responseText.chop(3);
+        responseText = responseText.trimmed();
+    } else if (responseText.startsWith("```")) {
+        responseText.remove(0, 3);
+        if (responseText.endsWith("```")) responseText.chop(3);
+        responseText = responseText.trimmed();
+    }
+    
+    QJsonParseError parseErr;
+    QJsonDocument respDoc = QJsonDocument::fromJson(responseText.toUtf8(), &parseErr);
+    if (parseErr.error != QJsonParseError::NoError) {
+        m_statsLabel->setText("  Error parsing JSON response  ");
+        m_complexityBadge->setText("  Error  ");
+        return;
+    }
+
+    QJsonObject result = respDoc.object();
+    
+    // Time Complexity
+    QString tc = result["time_complexity"].toString();
+    m_complexityBadge->setText("  Complexity: " + tc + "  ");
+
+    // Space Complexity & Algorithms
+    QString sc = result["space_complexity"].toString();
+    QJsonArray algos = result["algorithms_used"].toArray();
+    QStringList algoList;
+    for (const auto& a : algos) algoList << a.toString();
+    
+    QString stats = "  🧠 " + algoList.join(" + ");
+    if (!sc.isEmpty()) stats += "  │  Space: " + sc;
+    stats += "  ";
+    m_statsLabel->setText(stats);
+
+    // Suggestions
+    m_suggList->clear();
+    QJsonArray suggs = result["suggestions"].toArray();
+    if (suggs.isEmpty()) {
+        auto* item = new QListWidgetItem("✅  No issues found — code looks efficient!");
+        item->setForeground(QColor("#a6e3a1"));
+        m_suggList->addItem(item);
+    } else {
+        for (const auto& s : suggs) {
+            QJsonObject obj = s.toObject();
+            QString icon = obj["icon"].toString();
+            QString text = obj["text"].toString();
+            int severity = obj["severity"].toInt();
+
+            auto* item = new QListWidgetItem(icon + "  " + text);
+            item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
+            switch (severity) {
+                case 5: item->setForeground(QColor("#f38ba8")); break;
+                case 4: item->setForeground(QColor("#fab387")); break;
+                case 3: item->setForeground(QColor("#f9e2af")); break;
+                case 2: item->setForeground(QColor("#89dceb")); break;
+                default:item->setForeground(QColor("#a6e3a1")); break;
+            }
+            m_suggList->addItem(item);
+        }
+    }
+
+    // Chart update
+    ComplexityClass cls = ComplexityClass::O1;
+    if (tc.contains("N^3", Qt::CaseInsensitive) || tc.contains("N³", Qt::CaseInsensitive)) cls = ComplexityClass::ON3;
+    else if (tc.contains("N^2", Qt::CaseInsensitive) || tc.contains("N²", Qt::CaseInsensitive)) cls = ComplexityClass::ON2;
+    else if (tc.contains("N log", Qt::CaseInsensitive)) cls = ComplexityClass::ONLogN;
+    else if (tc.contains("N", Qt::CaseInsensitive) && !tc.contains("log", Qt::CaseInsensitive)) cls = ComplexityClass::ON;
+    else if (tc.contains("log", Qt::CaseInsensitive)) cls = ComplexityClass::OLogN;
+    updateChart(cls);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -461,29 +572,7 @@ void MainWindow::updateChart(ComplexityClass cls) {
     if (oldChart) delete oldChart;
 }
 
-void MainWindow::updateSuggestions(const std::vector<Suggestion>& suggestions) {
-    m_suggList->clear();
-    if (suggestions.empty()) {
-        auto* item = new QListWidgetItem("✅  No issues found — code looks efficient!");
-        item->setForeground(QColor("#a6e3a1"));
-        m_suggList->addItem(item);
-        return;
-    }
-    for (const auto& s : suggestions) {
-        QString text = QString::fromStdString(s.icon + "  " + s.text);
-        auto* item = new QListWidgetItem(text);
-        item->setFlags(item->flags() & ~Qt::ItemIsSelectable);
-        // Color by severity
-        switch (s.severity) {
-        case 5: item->setForeground(QColor("#f38ba8")); break; // red
-        case 4: item->setForeground(QColor("#fab387")); break; // orange
-        case 3: item->setForeground(QColor("#f9e2af")); break; // yellow
-        case 2: item->setForeground(QColor("#89dceb")); break; // cyan
-        default:item->setForeground(QColor("#a6e3a1")); break; // green
-        }
-        m_suggList->addItem(item);
-    }
-}
+
 
 QString MainWindow::nodeIcon(const std::string& label) const {
     if (label == "for")    return "🔁";

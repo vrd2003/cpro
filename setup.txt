@@ -1,0 +1,45 @@
+# C++ DSA Code Analyzer & Visualizer
+This application uses Qt6 and the Gemini 2.5 Flash API to detect algorithms, estimate time/space complexity, and offer intelligent optimization suggestions for C++ code.
+
+## System Prerequisites
+1. **C++ Compiler**: MinGW-w64 (via MSYS2) or MSVC.
+2. **CMake**: Version 3.22 or higher.
+3. **Qt6**: Required components include `Widgets`, `Charts`, and `Network`.
+
+## Step-by-Step Setup
+
+1. **Extract/Clone** the project folder.
+2. **Open a terminal** (like PowerShell or MSYS2 MinGW-64) in the project root directory (`cpro`).
+3. **Delete any existing build cache** if migrating from another computer:
+   ```powershell
+   Remove-Item -Recurse -Force build
+   ```
+4. **Create a new build directory**:
+   ```powershell
+   mkdir build
+   cd build
+   ```
+5. **Configure CMake**: 
+   Point CMake to your active Qt6 installation directory. For example, if you're using MinGW installed at `C:\Qt\6.10.2\mingw_64`:
+   ```powershell
+   cmake -G "MinGW Makefiles" -DCMAKE_PREFIX_PATH="C:\Qt\6.10.2\mingw_64" ..
+   ```
+   *(If you're using MSVC, run `cmake -DCMAKE_PREFIX_PATH="C:\Qt\6.x.x\msvc2022_64" ..` instead)*
+
+6. **Compile the executable**:
+   ```powershell
+   cmake --build .
+   ```
+
+7. **Run the App**:
+   ```powershell
+   .\ComplexityAnalyzer.exe
+   ```
+
+## Common Troubleshooting
+* **Error: `cannot open output file ComplexityAnalyzer.exe: Permission denied`**
+  Make sure the application is fully closed before you attempt to compile again. A running application locks the `.exe` file.
+* **CMake Cannot Find Qt6**
+  Ensure your `CMAKE_PREFIX_PATH` in the CMake configure step perfectly matches the directory containing `Qt6Config.cmake` (usually inside the `lib/cmake` folder of your particular kit, e.g. `mingw_64`).
+* **API Key Errors**
+  The executable has a hardcoded Gemini API key for convenience. If rate limits or timeouts occur, verify your internet connection.

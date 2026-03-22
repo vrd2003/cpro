@@ -1,5 +1,5 @@
 #pragma once
-#include "../src/ComplexityEstimator.h"
+#include "../src/ComplexityClass.h"
 #include <QtCharts/QChart>
 
 class ChartHelper {
