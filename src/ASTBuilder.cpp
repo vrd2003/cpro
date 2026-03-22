@@ -2,21 +2,23 @@
 #include "TokenProcessor.h"
 #include <stack>
 
-std::shared_ptr<ASTNode> ASTBuilder::build(const std::vector<Token>& tokens) {
-    auto root = std::make_shared<ASTNode>("Program", 0, 0);
+using namespace std;
+
+shared_ptr<ASTNode> ASTBuilder::build(const vector<Token>& tokens) {
+    auto root = make_shared<ASTNode>("Program", 0, 0);
 
     // Parent stack: top = current parent node
-    std::stack<std::shared_ptr<ASTNode>> parentStack;
+    stack<shared_ptr<ASTNode>> parentStack;
     parentStack.push(root);
 
     // pending keyword to attach when we see the next open brace
-    std::shared_ptr<ASTNode> pendingNode = nullptr;
+    shared_ptr<ASTNode> pendingNode = nullptr;
     bool nextBraceIsControl = false;
 
     for (const auto& tok : tokens) {
-        auto makeNode = [&](const std::string& label) {
+        auto makeNode = [&](const string& label) {
             int depth = (int)parentStack.size() - 1;
-            return std::make_shared<ASTNode>(label, depth, tok.lineNumber);
+            return make_shared<ASTNode>(label, depth, tok.lineNumber);
         };
 
         switch (tok.type) {

@@ -4,6 +4,8 @@
 #include <QRegularExpression>
 #include <vector>
 
+using namespace std;
+
 class SyntaxHighlighter : public QSyntaxHighlighter {
     Q_OBJECT
 public:
@@ -15,7 +17,7 @@ private:
         QRegularExpression pattern;
         QTextCharFormat    format;
     };
-    std::vector<Rule>  rules;
+    vector<Rule>  rules;
     QTextCharFormat    blockCommentFormat;
     QRegularExpression commentStart;
     QRegularExpression commentEnd;

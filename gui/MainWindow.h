@@ -16,6 +16,8 @@
 #include "../src/Analyzer.h"
 #include "../src/ComplexityClass.h"
 
+using namespace std;
+
 class SyntaxHighlighter;
 
 class MainWindow : public QMainWindow {
@@ -49,10 +51,10 @@ private:
     // Helpers
     void buildUi();
     void applyTheme();
-    void populateAST(const std::shared_ptr<ASTNode>& node,
+    void populateAST(const shared_ptr<ASTNode>& node,
                      QTreeWidgetItem* parentItem);
     void updateChart(ComplexityClass cls);
-    QString nodeIcon(const std::string& label) const;
+    QString nodeIcon(const string& label) const;
 
 private slots:
     void onGeminiResponse(QNetworkReply* reply);

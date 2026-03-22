@@ -4,8 +4,10 @@
 #include <memory>
 #include <vector>
 
+using namespace std;
+
 class ASTBuilder {
 public:
     // Build an AST from the flat token list; returns the root "Program" node
-    std::shared_ptr<ASTNode> build(const std::vector<Token>& tokens);
+    shared_ptr<ASTNode> build(const vector<Token>& tokens);
 };

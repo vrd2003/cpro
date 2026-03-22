@@ -2,17 +2,19 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 enum class TokenType {
     // ── Control flow ───────────────────────────────────────────────────────
     FOR, WHILE, DO, IF, ELSE, RETURN,
 
     // ── Sorting ────────────────────────────────────────────────────────────
-    SORT,           // std::sort, stable_sort
+    SORT,           // sort, stable_sort
     QSORT,          // qsort (C-style)
 
     // ── Searching ──────────────────────────────────────────────────────────
     BINARY_SEARCH,  // binary_search / lower_bound / upper_bound / equal_range
-    FIND,           // std::find (linear)
+    FIND,           // find (linear)
 
     // ── Graph / Tree traversal ─────────────────────────────────────────────
     QUEUE_OP,       // queue, BFS signal
@@ -32,8 +34,8 @@ enum class TokenType {
     MAP_OP,         // map / set (ordered → log n)
 
     // ── Two Pointer / Sliding Window helpers ──────────────────────────────
-    SWAP_OP,        // std::swap (hinting at in-place)
-    REVERSE_OP,     // std::reverse
+    SWAP_OP,        // swap (hinting at in-place)
+    REVERSE_OP,     // reverse
 
     // ── Recursion ──────────────────────────────────────────────────────────
     RECURSIVE_CALL, // function calling itself (detected by name match)
@@ -48,20 +50,18 @@ enum class TokenType {
 };
 
 struct Token {
-    TokenType   type;
-    std::string text;
-    int         lineNumber;
+    TokenType type;
+    string text;
+    int lineNumber;
 };
 
 class TokenProcessor {
 public:
-    std::vector<Token> tokenize(const std::string& code);
+    vector<Token> tokenize(const string& code);
 
     // Expose function names found (for recursion detection)
-    std::vector<std::string> functionNames; // populated during tokenize
+    vector<string> functionNames; // populated during tokenize
 
 private:
-    TokenType classifyWord(const std::string& word,
-                           const std::string& line,
-                           const std::string& nextWord) const;
+    TokenType classifyWord(const string& word,const string& line,const string& nextWord) const;
 };

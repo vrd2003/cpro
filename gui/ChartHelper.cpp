@@ -7,11 +7,13 @@
 #include <QFont>
 #include <cmath>
 
+using namespace std;
+
 static void addSeries(QChart* chart,
                       const QString& name,
                       const QColor& color,
                       int penWidth,
-                      const std::vector<std::pair<double,double>>& pts)
+                      const vector<pair<double,double>>& pts)
 {
     auto* series = new QLineSeries(chart);
     series->setName(name);
@@ -26,14 +28,11 @@ static void addSeries(QChart* chart,
 
 QChart* ChartHelper::buildChart(ComplexityClass highlighted) {
     auto* chart = new QChart();
-    chart->setTitle("Complexity Growth Curves");
     chart->setBackgroundBrush(QColor("#1e1e2e"));
-    chart->setTitleBrush(QColor("#cdd6f4"));
-    QFont tf; tf.setPointSize(10); tf.setBold(true);
-    chart->setTitleFont(tf);
     chart->legend()->setLabelColor(QColor("#cdd6f4"));
     chart->legend()->setBackgroundVisible(false);
-    chart->setAnimationOptions(QChart::NoAnimation);
+    chart->legend()->setAlignment(Qt::AlignRight);
+    chart->setAnimationOptions(QChart::SeriesAnimations);
 
     struct CurveData {
         ComplexityClass cls;
@@ -58,16 +57,16 @@ QChart* ChartHelper::buildChart(ComplexityClass highlighted) {
         if (!hl) col.setAlphaF(0.25f);
         int w = hl ? 4 : 2;
 
-        std::vector<std::pair<double,double>> pts;
+        vector<pair<double,double>> pts;
         for (int x = 1; x <= 20; ++x) {
             double y = 0;
             switch (c.cls) {
             case ComplexityClass::O1:      y = 1;                              break;
-            case ComplexityClass::OLogN:   y = std::log2(x);                  break;
+            case ComplexityClass::OLogN:   y = log2(x);                  break;
             case ComplexityClass::ON:      y = x;                              break;
-            case ComplexityClass::ONLogN:  y = x * std::log2(x);              break;
+            case ComplexityClass::ONLogN:  y = x * log2(x);              break;
             case ComplexityClass::ON2:     y = (double)x * x;                 break;
-            case ComplexityClass::ON2LogN: y = (double)x * x * std::log2(x); break;
+            case ComplexityClass::ON2LogN: y = (double)x * x * log2(x); break;
             case ComplexityClass::ON3:     y = (double)x * x * x;             break;
             default: y = x; break;
             }

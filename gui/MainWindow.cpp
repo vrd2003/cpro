@@ -17,112 +17,192 @@
 #include <QtCharts/QChartView>
 #include <QScrollBar>
 
+using namespace std;
+
 // ── Example snippets ────────────────────────────────────────────────────────
-static const std::vector<std::pair<QString, QString>> k_examples = {
+static const vector<pair<QString, QString>> k_examples = {
     {"-- Load Example --", ""},
     // Sorting
     {"O(1) — Constant access",
-        "int getFirst(int arr[], int n) {\n    return arr[0];\n}"},
+        "int getFirst(int arr[], int n) {\n"
+        "    return arr[0];\n"
+        "}"},
     {"O(n) — Linear search",
         "int linearSearch(int arr[], int n, int x) {\n"
         "    for (int i = 0; i < n; i++) {\n"
-        "        if (arr[i] == x) return i;\n"
-        "    }\n    return -1;\n}"},
+        "        if (arr[i] == x) {\n"
+        "            return i;\n"
+        "        }\n"
+        "    }\n"
+        "    return -1;\n"
+        "}"},
     {"O(log n) — Binary search",
-        "#include <algorithm>\nbool found(std::vector<int>& v, int x) {\n"
+        "#include <vector>\n"
+        "#include <algorithm>\n"
+        "using namespace std;\n\n"
+        "bool found(vector<int>& v, int x) {\n"
         "    sort(v.begin(), v.end());\n"
-        "    return binary_search(v.begin(), v.end(), x);\n}"},
-    {"O(n log n) — std::sort",
-        "#include <algorithm>\nvoid sortArray(std::vector<int>& v) {\n"
-        "    sort(v.begin(), v.end());\n}"},
+        "    return binary_search(v.begin(), v.end(), x);\n"
+        "}"},
+    {"O(n log n) — sort",
+        "#include <vector>\n"
+        "#include <algorithm>\n"
+        "using namespace std;\n\n"
+        "void sortArray(vector<int>& v) {\n"
+        "    sort(v.begin(), v.end());\n"
+        "}"},
     {"O(n²) — Bubble Sort",
+        "#include <algorithm>\n"
+        "using namespace std;\n\n"
         "void bubbleSort(int arr[], int n) {\n"
         "    for (int i = 0; i < n; i++) {\n"
         "        for (int j = 0; j < n - i - 1; j++) {\n"
-        "            if (arr[j] > arr[j+1])\n"
-        "                std::swap(arr[j], arr[j+1]);\n"
-        "        }\n    }\n}"},
+        "            if (arr[j] > arr[j+1]) {\n"
+        "                swap(arr[j], arr[j+1]);\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}"},
     {"O(n²) — Selection Sort",
+        "#include <algorithm>\n"
+        "using namespace std;\n\n"
         "void selectionSort(int arr[], int n) {\n"
         "    for (int i = 0; i < n; i++) {\n"
         "        int minIdx = i;\n"
-        "        for (int j = i+1; j < n; j++)\n"
-        "            if (arr[j] < arr[minIdx]) minIdx = j;\n"
-        "        std::swap(arr[i], arr[minIdx]);\n"
-        "    }\n}"},
+        "        for (int j = i + 1; j < n; j++) {\n"
+        "            if (arr[j] < arr[minIdx]) {\n"
+        "                minIdx = j;\n"
+        "            }\n"
+        "        }\n"
+        "        swap(arr[i], arr[minIdx]);\n"
+        "    }\n"
+        "}"},
     {"O(n² log n) — Nested + sort",
-        "void process(std::vector<int>& v, int n) {\n"
+        "#include <vector>\n"
+        "#include <algorithm>\n"
+        "using namespace std;\n\n"
+        "void process(vector<int>& v, int n) {\n"
         "    for (int i = 0; i < n; i++) {\n"
         "        for (int j = 0; j < n; j++) {\n"
         "            sort(v.begin(), v.end());\n"
-        "        }\n    }\n}"},
+        "        }\n"
+        "    }\n"
+        "}"},
     {"O(n³) — Triple nested",
         "void tripleLoop(int n) {\n"
         "    for (int i = 0; i < n; i++) {\n"
         "        for (int j = 0; j < n; j++) {\n"
         "            for (int k = 0; k < n; k++) {\n"
         "                // O(n³)\n"
-        "            }\n        }\n    }\n}"},
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}"},
     // Graph
     {"BFS — O(V+E)",
-        "#include <queue>\nvoid bfs(int start, std::vector<std::vector<int>>& adj, int n) {\n"
-        "    std::vector<bool> visited(n, false);\n"
-        "    std::queue<int> q;\n"
-        "    q.push(start); visited[start] = true;\n"
+        "#include <vector>\n"
+        "#include <queue>\n"
+        "using namespace std;\n\n"
+        "void bfs(int start, vector<vector<int>>& adj, int n) {\n"
+        "    vector<bool> visited(n, false);\n"
+        "    queue<int> q;\n"
+        "    q.push(start);\n"
+        "    visited[start] = true;\n"
         "    while (!q.empty()) {\n"
-        "        int node = q.front(); q.pop();\n"
-        "        for (int nb : adj[node])\n"
-        "            if (!visited[nb]) { visited[nb]=true; q.push(nb); }\n"
-        "    }\n}"},
+        "        int node = q.front();\n"
+        "        q.pop();\n"
+        "        for (int nb : adj[node]) {\n"
+        "            if (!visited[nb]) {\n"
+        "                visited[nb] = true;\n"
+        "                q.push(nb);\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}"},
     {"DFS Recursive — O(V+E)",
-        "void dfs(int node, std::vector<std::vector<int>>& adj,\n"
-        "         std::vector<bool>& visited) {\n"
+        "#include <vector>\n"
+        "using namespace std;\n\n"
+        "void dfs(int node, vector<vector<int>>& adj, vector<bool>& visited) {\n"
         "    visited[node] = true;\n"
-        "    for (int nb : adj[node])\n"
-        "        if (!visited[nb]) dfs(nb, adj, visited);\n"
+        "    for (int nb : adj[node]) {\n"
+        "        if (!visited[nb]) {\n"
+        "            dfs(nb, adj, visited);\n"
+        "        }\n"
+        "    }\n"
         "}"},
     // DP
     {"DP — Fibonacci (Tabulation)",
+        "#include <vector>\n"
+        "using namespace std;\n\n"
         "int fib(int n) {\n"
-        "    std::vector<int> dp(n+1, 0);\n"
-        "    dp[0] = 0; dp[1] = 1;\n"
-        "    for (int i = 2; i <= n; i++)\n"
+        "    vector<int> dp(n + 1, 0);\n"
+        "    dp[0] = 0;\n"
+        "    dp[1] = 1;\n"
+        "    for (int i = 2; i <= n; i++) {\n"
         "        dp[i] = dp[i-1] + dp[i-2];\n"
-        "    return dp[n];\n}"},
+        "    }\n"
+        "    return dp[n];\n"
+        "}"},
     {"DP — 0/1 Knapsack O(nW)",
+        "#include <vector>\n"
+        "#include <algorithm>\n"
+        "using namespace std;\n\n"
         "int knapsack(int W, int wt[], int val[], int n) {\n"
-        "    std::vector<std::vector<int>> dp(n+1, std::vector<int>(W+1, 0));\n"
+        "    vector<vector<int>> dp(n + 1, vector<int>(W + 1, 0));\n"
         "    for (int i = 1; i <= n; i++) {\n"
         "        for (int w = 0; w <= W; w++) {\n"
         "            dp[i][w] = dp[i-1][w];\n"
-        "            if (wt[i-1] <= w)\n"
-        "                dp[i][w] = std::max(dp[i][w], dp[i-1][w-wt[i-1]] + val[i-1]);\n"
-        "        }\n    }\n    return dp[n][W];\n}"},
+        "            if (wt[i-1] <= w) {\n"
+        "                dp[i][w] = max(dp[i][w], dp[i-1][w-wt[i-1]] + val[i-1]);\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "    return dp[n][W];\n"
+        "}"},
     // Hashing / Two-pointer
     {"Hashing — Two Sum O(n)",
-        "#include <unordered_map>\nstd::pair<int,int> twoSum(std::vector<int>& nums, int target) {\n"
-        "    std::unordered_map<int,int> mp;\n"
+        "#include <vector>\n"
+        "#include <unordered_map>\n"
+        "using namespace std;\n\n"
+        "pair<int,int> twoSum(vector<int>& nums, int target) {\n"
+        "    unordered_map<int,int> mp;\n"
         "    for (int i = 0; i < (int)nums.size(); i++) {\n"
-        "        if (mp.count(target - nums[i]))\n"
+        "        if (mp.count(target - nums[i])) {\n"
         "            return {mp[target-nums[i]], i};\n"
+        "        }\n"
         "        mp[nums[i]] = i;\n"
-        "    }\n    return {-1,-1};\n}"},
+        "    }\n"
+        "    return {-1,-1};\n"
+        "}"},
     {"Greedy — Min Heap (Dijkstra style)",
-        "#include <queue>\nvoid dijkstra(int src, std::vector<std::pair<int,int>> adj[], int n) {\n"
-        "    std::vector<int> dist(n, INT_MAX);\n"
-        "    std::priority_queue<std::pair<int,int>,\n"
-        "        std::vector<std::pair<int,int>>, std::greater<>> pq;\n"
-        "    dist[src] = 0; pq.push({0, src});\n"
+        "#include <vector>\n"
+        "#include <queue>\n"
+        "using namespace std;\n\n"
+        "void dijkstra(int src, vector<pair<int,int>> adj[], int n) {\n"
+        "    vector<int> dist(n, INT_MAX);\n"
+        "    priority_queue<pair<int,int>, vector<pair<int,int>>, greater<>> pq;\n"
+        "    dist[src] = 0;\n"
+        "    pq.push({0, src});\n"
         "    while (!pq.empty()) {\n"
-        "        auto [d, u] = pq.top(); pq.pop();\n"
-        "        for (auto [w, v] : adj[u])\n"
-        "            if (dist[u]+w < dist[v]) { dist[v]=dist[u]+w; pq.push({dist[v],v}); }\n"
-        "    }\n}"},
+        "        auto [d, u] = pq.top();\n"
+        "        pq.pop();\n"
+        "        for (auto [w, v] : adj[u]) {\n"
+        "            if (dist[u] + w < dist[v]) {\n"
+        "                dist[v] = dist[u] + w;\n"
+        "                pq.push({dist[v], v});\n"
+        "            }\n"
+        "        }\n"
+        "    }\n"
+        "}"},
     {"Bit Manipulation — Count set bits",
         "int countBits(int n) {\n"
         "    int count = 0;\n"
-        "    while (n) { count += n & 1; n >>= 1; }\n"
-        "    return count;\n    // or: return __builtin_popcount(n);\n}"},
+        "    while (n > 0) {\n"
+        "        count += n & 1;\n"
+        "        n >>= 1;\n"
+        "    }\n"
+        "    return count;\n"
+        "}"},
 };
 
 // ── Theme stylesheet ─────────────────────────────────────────────────────────
@@ -197,20 +277,20 @@ QListWidget {
 QListWidget::item { padding: 6px; border-bottom: 1px solid #313244; }
 QListWidget::item:hover    { background: #313244; }
 QListWidget::item:selected { background: #45475a; }
-QSplitter::handle { background: #313244; }
 QGroupBox {
     border: 1px solid #313244;
     border-radius: 6px;
-    margin-top: 16px;
+    margin-top: 24px;
     padding-top: 8px;
     color: #89b4fa;
     font-weight: bold;
 }
 QGroupBox::title {
     subcontrol-origin: margin;
+    subcontrol-position: top left;
     left: 10px;
-    top: -8px;
-    background: #1e1e2e;
+    top: 2px;
+    background: transparent;
     padding: 0 4px;
 }
 QStatusBar { background: #181825; color: #a6adc8; }
@@ -295,7 +375,7 @@ void MainWindow::buildUi() {
     auto* bottomWidget  = new QWidget;
     auto* bottomLayout  = new QHBoxLayout(bottomWidget);
     bottomLayout->setSpacing(8);
-    bottomLayout->setContentsMargins(0, 0, 0, 0);
+    bottomLayout->setContentsMargins(4, 8, 4, 4);
 
     // Chart — construct with initial chart to avoid null-scene crash
     auto* chartGroup  = new QGroupBox("📈  Complexity Growth Chart");
@@ -314,6 +394,8 @@ void MainWindow::buildUi() {
     auto* suggLayout = new QVBoxLayout(suggGroup);
     m_suggList = new QListWidget;
     m_suggList->setWordWrap(true);
+    m_suggList->setResizeMode(QListView::Adjust);
+    m_suggList->setSpacing(4);
     suggLayout->addWidget(m_suggList);
     bottomLayout->addWidget(suggGroup, 2);
 
@@ -517,16 +599,18 @@ void MainWindow::onGeminiResponse(QNetworkReply* reply) {
 
     // Chart update
     ComplexityClass cls = ComplexityClass::O1;
-    if (tc.contains("N^3", Qt::CaseInsensitive) || tc.contains("N³", Qt::CaseInsensitive)) cls = ComplexityClass::ON3;
-    else if (tc.contains("N^2", Qt::CaseInsensitive) || tc.contains("N²", Qt::CaseInsensitive)) cls = ComplexityClass::ON2;
-    else if (tc.contains("N log", Qt::CaseInsensitive)) cls = ComplexityClass::ONLogN;
-    else if (tc.contains("N", Qt::CaseInsensitive) && !tc.contains("log", Qt::CaseInsensitive)) cls = ComplexityClass::ON;
+    if (tc.contains("2^N", Qt::CaseInsensitive) || tc.contains("exp", Qt::CaseInsensitive) || tc.contains("!", Qt::CaseInsensitive)) cls = ComplexityClass::ONK;
+    else if (tc.contains("N^3", Qt::CaseInsensitive) || tc.contains("N³", Qt::CaseInsensitive)) cls = ComplexityClass::ON3;
+    else if (tc.contains("N^2 log", Qt::CaseInsensitive) || tc.contains("N² log", Qt::CaseInsensitive)) cls = ComplexityClass::ON2LogN;
+    else if (tc.contains("N^2", Qt::CaseInsensitive) || tc.contains("N²", Qt::CaseInsensitive) || tc.contains("V^2", Qt::CaseInsensitive) || tc.contains("E^2", Qt::CaseInsensitive)) cls = ComplexityClass::ON2;
+    else if (tc.contains("N log", Qt::CaseInsensitive) || tc.contains("V log", Qt::CaseInsensitive) || tc.contains("E log", Qt::CaseInsensitive)) cls = ComplexityClass::ONLogN;
     else if (tc.contains("log", Qt::CaseInsensitive)) cls = ComplexityClass::OLogN;
+    else if (tc.contains("N", Qt::CaseInsensitive) || tc.contains("V", Qt::CaseInsensitive) || tc.contains("E", Qt::CaseInsensitive)) cls = ComplexityClass::ON;
     updateChart(cls);
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
-void MainWindow::populateAST(const std::shared_ptr<ASTNode>& node,
+void MainWindow::populateAST(const shared_ptr<ASTNode>& node,
                               QTreeWidgetItem* parentItem) {
     if (!node) return;
     QString icon = nodeIcon(node->label);
@@ -574,7 +658,7 @@ void MainWindow::updateChart(ComplexityClass cls) {
 
 
 
-QString MainWindow::nodeIcon(const std::string& label) const {
+QString MainWindow::nodeIcon(const string& label) const {
     if (label == "for")    return "🔁";
     if (label == "while")  return "🔄";
     if (label == "do")     return "🔂";
@@ -582,8 +666,8 @@ QString MainWindow::nodeIcon(const std::string& label) const {
     if (label == "if")     return "⑂";
     if (label == "else")   return "↩";
     if (label == "Program")return "📄";
-    if (label.find("binary") != std::string::npos ||
-        label.find("lower")  != std::string::npos ||
-        label.find("upper")  != std::string::npos) return "🔍";
+    if (label.find("binary") != string::npos ||
+        label.find("lower")  != string::npos ||
+        label.find("upper")  != string::npos) return "🔍";
     return "⚙";
 }
