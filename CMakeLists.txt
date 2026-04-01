@@ -22,6 +22,7 @@ set(ENGINE_SOURCES
 set(GUI_SOURCES
     gui/SyntaxHighlighter.cpp
     gui/ChartHelper.cpp
+    gui/GeminiClient.cpp
     gui/MainWindow.cpp
 )
 

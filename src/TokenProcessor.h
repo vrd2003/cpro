@@ -2,8 +2,7 @@
 #include <string>
 #include <vector>
 
-using namespace std;
-
+// ── Token types recognized by the lexer ──────────────────────────────────────
 enum class TokenType {
     // ── Control flow ───────────────────────────────────────────────────────
     FOR, WHILE, DO, IF, ELSE, RETURN,
@@ -50,18 +49,30 @@ enum class TokenType {
 };
 
 struct Token {
-    TokenType type;
-    string text;
-    int lineNumber;
+    TokenType   type;
+    std::string text;
+    int         lineNumber;
 };
 
 class TokenProcessor {
 public:
-    vector<Token> tokenize(const string& code);
+    std::vector<Token> tokenize(const std::string& code);
 
-    // Expose function names found (for recursion detection)
-    vector<string> functionNames; // populated during tokenize
+    // Read-only accessor for function names collected during the last tokenize()
+    const std::vector<std::string>& getFunctionNames() const { return functionNames; }
 
 private:
-    TokenType classifyWord(const string& word,const string& line,const string& nextWord) const;
+    std::vector<std::string> functionNames; // populated during tokenize()
+
+    TokenType classifyWord(const std::string& word,
+                           const std::string& line,
+                           const std::string& nextWord) const;
+
+    // ── Helpers used internally by tokenize() ─────────────────────────────
+    std::string              cleanLine(const std::string& line) const;
+    void                     emitBraceTokens(const std::string& clean, int lineNum,
+                                             std::vector<Token>& out) const;
+    std::vector<std::string> extractWords(const std::string& clean) const;
+    void                     emitBitToken(const std::string& clean, int lineNum,
+                                         std::vector<Token>& out) const;
 };

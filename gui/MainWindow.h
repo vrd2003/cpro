@@ -4,19 +4,16 @@
 #include <QPushButton>
 #include <QTreeWidget>
 #include <QListWidget>
+#include <QTableWidget>
+#include <QTabWidget>
 #include <QLabel>
 #include <QComboBox>
 #include <QSplitter>
-#include <QtCharts/QChartView>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QJsonDocument>
 #include <QJsonObject>
-#include <QJsonArray>
+#include <QtCharts/QChartView>
+#include "GeminiClient.h"
 #include "../src/Analyzer.h"
 #include "../src/ComplexityClass.h"
-
-using namespace std;
 
 class SyntaxHighlighter;
 
@@ -28,35 +25,41 @@ public:
 private slots:
     void onAnalyze();
     void onLoadExample(int index);
+    void onChangeApiKey();
 
 private:
-    // Left panel
-    QPlainTextEdit*        m_editor;
-    SyntaxHighlighter*     m_highlighter;
-    QPushButton*           m_analyzeBtn;
-    QComboBox*             m_exampleCombo;
+    // ── Left panel ───────────────────────────────────────────────────────────
+    QPlainTextEdit*    m_editor;
+    SyntaxHighlighter* m_highlighter;
+    QPushButton*       m_analyzeBtn;
+    QPushButton*       m_apiKeyBtn;
+    QComboBox*         m_exampleCombo;
 
-    // Right panel
-    QTreeWidget*             m_astTree;
-    QChartView*              m_chartView;
-    QListWidget*             m_suggList;
+    // ── Right panel ──────────────────────────────────────────────────────────
+    QTabWidget*   m_topTabs;
+    QTreeWidget*  m_astTree;
+    QTableWidget* m_funcTable;
+    QChartView*   m_chartView;
+    QListWidget*  m_suggList;
 
-    // Status bar widgets
-    QLabel*            m_complexityBadge;
-    QLabel*            m_statsLabel;
+    // ── Status bar ───────────────────────────────────────────────────────────
+    QLabel* m_complexityBadge;
+    QLabel* m_statsLabel;
 
-    // Network & API
-    QNetworkAccessManager* m_networkMgr;
+    // ── Gemini networking (owned, SRP-isolated) ───────────────────────────────
+    GeminiClient* m_gemini;
 
-    // Helpers
+    // ── UI helpers ───────────────────────────────────────────────────────────
     void buildUi();
     void applyTheme();
-    void populateAST(const shared_ptr<ASTNode>& node,
+    void populateAST(const std::shared_ptr<ASTNode>& node,
                      QTreeWidgetItem* parentItem);
     void updateChart(ComplexityClass cls);
-    QString nodeIcon(const string& label) const;
+    QString nodeIcon(const std::string& label) const;
 
-private slots:
-    void onGeminiResponse(QNetworkReply* reply);
-
+    // ── Analysis result helpers ───────────────────────────────────────────────
+    // Classifies a Gemini time-complexity string into a ComplexityClass enum.
+    ComplexityClass classifyComplexity(const QString& tc) const;
+    // Applies a parsed Gemini JSON result to all UI panels.
+    void applyAnalysisResult(const QJsonObject& result);
 };

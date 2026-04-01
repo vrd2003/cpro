@@ -3,14 +3,12 @@
 #include <string>
 #include <memory>
 
-using namespace std;
-
 struct AnalysisResult {
-    // AST (we no longer compute heuristics here; it's handled by Gemini)
-    shared_ptr<ASTNode> ast;
+    // AST produced by ASTBuilder; complexity analysis is handled by GeminiClient
+    std::shared_ptr<ASTNode> ast;
 };
 
 class Analyzer {
 public:
-    AnalysisResult analyze(const string& code);
+    AnalysisResult analyze(const std::string& code);
 };
